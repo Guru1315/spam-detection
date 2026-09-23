@@ -1,0 +1,108 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+import urllib.request
+
+# ==========================================
+# 1. Environment Setup & Data Loading
+# ==========================================
+url = "https://raw.githubusercontent.com/justmarkham/pycon-2016-tutorial/master/data/sms.tsv"
+print("Downloading dataset...")
+urllib.request.urlretrieve(url, "sms.tsv")
+print("Download complete.")
+
+# Load the dataset using pandas
+# The file is tab-separated (tsv) and has no header by default
+df = pd.read_csv("sms.tsv", sep='\t', header=None, names=['label', 'message'])
+
+# Inspect the first few rows
+print("\nDataset Sample:")
+print(df.head())
+
+# Map 'ham' to 0 and 'spam' to 1 for easier processing
+df['label_num'] = df.label.map({'ham': 0, 'spam': 1})
+
+# ==========================================
+# 2. Data Preprocessing & Feature Extraction
+# ==========================================
+# Define X (features/messages) and y (target/labels)
+X = df['message']
+y = df['label_num']
+
+# Split data into training (80%) and testing (20%) sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+print(f"\nTraining samples: {len(X_train)}")
+print(f"Testing samples: {len(X_test)}")
+
+# Initialize the TF-IDF Vectorizer
+vectorizer = TfidfVectorizer(stop_words='english')
+
+# Fit the vectorizer to the training data and transform it
+X_train_transformed = vectorizer.fit_transform(X_train)
+
+# Transform the testing data (do NOT fit on testing data to avoid data leakage)
+X_test_transformed = vectorizer.transform(X_test)
+print("TF-IDF transformation complete.\n")
+
+# ==========================================
+# 3. Model Training
+# ==========================================
+# Initialize the Multinomial Naive Bayes model
+model = MultinomialNB()
+
+# Train the model using the transformed training data
+print("Training the Naive Bayes model...")
+model.fit(X_train_transformed, y_train)
+print("Model training complete.\n")
+
+# ==========================================
+# 4. Model Evaluation
+# ==========================================
+# Make predictions on the test set
+y_pred = model.predict(X_test_transformed)
+
+# Calculate and print Accuracy
+accuracy = accuracy_score(y_test, y_pred)
+print(f"=== Model Accuracy: {accuracy * 100:.2f}% ===\n")
+
+# Print Confusion Matrix
+print("=== Confusion Matrix ===")
+print("True Negative (Ham correctly identified):", confusion_matrix(y_test, y_pred)[0][0])
+print("False Positive (Ham incorrectly marked as Spam):", confusion_matrix(y_test, y_pred)[0][1])
+print("False Negative (Spam incorrectly marked as Ham):", confusion_matrix(y_test, y_pred)[1][0])
+print("True Positive (Spam correctly identified):", confusion_matrix(y_test, y_pred)[1][1])
+print("\n")
+
+# Print Classification Report (Precision, Recall, F1-Score)
+print("=== Detailed Classification Report ===")
+print(classification_report(y_test, y_pred, target_names=['Ham', 'Spam']))
+
+# ==========================================
+# 5. Interactive Testing in Terminal
+# ==========================================
+# Define your own custom test messages here
+custom_messages = [
+    "Hey, are we still on for lunch tomorrow? Let me know.",
+    "URGENT! You have won a 1 week FREE membership in our £100,000 Prize Jackpot! Txt the word: CLAIM to No: 81010 T&C www.dbuk.net LCCLTD POBOX 4403LDNW1A7RW18",
+    "Please review the attached project proposal for Q3 and provide your feedback by Friday.",
+    "Congratulations! You've been selected for a free $500 Amazon Gift Card. Click here to claim your reward now!!",
+    "Can you pick up some milk on your way home?"
+]
+
+print("\n=== Custom Message Predictions ===\n")
+
+for msg in custom_messages:
+    # Transform the raw text message using our fitted vectorizer
+    transformed_msg = vectorizer.transform([msg])
+    
+    # Predict using the trained model
+    prediction = model.predict(transformed_msg)
+    
+    # Map prediction back to string
+    result = "Spam" if prediction[0] == 1 else "Ham (Not Spam)"
+    
+    print(f"Message: '{msg}'")
+    print(f"Prediction: --> {result} <--\n")
