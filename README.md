@@ -64,9 +64,10 @@ Use word embeddings (Word2Vec, GloVe) instead of TF-IDF
 Deploy as a simple web app (Flask/Streamlit) for live message testing
 Add support for email (not just SMS) datasets
 
-📄 License
+📄 License :
+
 This project is open-source and available under the MIT License.
 
-🙋‍♂️ Author
+🙋‍♂️ Author:
 
 Built as part of academic coursework in Machine Learning / AI.
