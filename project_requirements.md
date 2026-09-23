@@ -7,7 +7,6 @@ If you are running this locally (outside of Google Colab), you will need to inst
 pandas
 scikit-learn
 ```
-*(Note: Google Colab comes with these packages pre-installed, so you don't need to install them if you are using Colab).*
 
 ---
 
